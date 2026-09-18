@@ -1,4 +1,9 @@
 from tools.flight_tool import search_flights
+from backend import run_travel_agent
 
-res = search_flights("Plan a 7 days Japan trip from del")
-print(res)
+user_input = input("Enter travel request: ")
+
+response = run_travel_agent(user_input=user_input, thread_id="test_user")
+
+print("\nFinal Response:\n")
+print(response["answer"])
