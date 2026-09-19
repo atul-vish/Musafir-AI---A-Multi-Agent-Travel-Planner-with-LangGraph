@@ -1,4 +1,4 @@
-FROM python:3.12.7-slim-bookworm
+FROM python:3.12-slim-bookwormokworm
 
 WORKDIR /app
 
@@ -24,6 +24,6 @@ RUN groupadd --system app && useradd --system --gid app --create-home --home-dir
 
 USER app
 
-EXPOSE 8000
+EXPOSE 8001
 
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8001"]
