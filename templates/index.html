@@ -2,81 +2,111 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Musafir AI</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="/static/style.css">
 </head>
 
 <body>
 
-    <div class="page-bg">
-        <div class="gradient-circle circle-1"></div>
-        <div class="gradient-circle circle-2"></div>
-        <div class="gradient-circle circle-3"></div>
-    </div>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <span class="brand">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2 16.5L22 12L2 7.5L2 11L14 12L2 13L2 16.5Z" fill="#2f6fed"/>
+                </svg>
+                Musafir AI
+            </span>
+
+            <span class="status-pill">
+                <span class="status-dot"></span>
+                Online
+            </span>
+        </div>
+    </header>
+
+    <section class="hero">
+        <svg class="hero-illustration" viewBox="0 0 800 260" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <path class="flight-path" d="M 40 120 Q 380 40 740 130" />
+            <g class="plane-icon">
+                <g transform="translate(-9 -9) scale(0.78) rotate(90 12 12)">
+                    <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2.5 1.5V22l4-1 4 1v-1.5L13 19v-5.5l8 2.5z" fill="#ffffff" />
+                </g>
+            </g>
+            <g class="skyline">
+                <rect x="30" y="200" width="26" height="60" />
+                <polygon points="80,260 80,190 100,170 120,190 120,260" />
+                <rect x="140" y="215" width="20" height="45" />
+                <rect x="600" y="210" width="22" height="50" />
+                <polygon points="650,260 650,180 672,155 694,180 694,260" />
+                <rect x="720" y="220" width="24" height="40" />
+                <circle cx="672" cy="150" r="4" />
+            </g>
+        </svg>
+
+        <div class="hero-copy">
+            <h1>Plan your perfect trip, powered by AI</h1>
+            <p>Tell Musafir where you want to go — a multi-agent LangGraph system searches flights, finds hotels and builds your full itinerary in one pass.</p>
+        </div>
+    </section>
 
     <main class="app-container">
 
-        <section class="hero-section">
-            <div class="badge">
-                ✈️ Musafir AI — A Multi-Agent Travel Planner with LangGraph
+        <section class="search-card">
+
+            <div class="search-card-head">
+                <h2>Where do you want to go?</h2>
             </div>
 
-            <h1>
-                Plan Your Perfect Trip with AI
-            </h1>
-
-            <p>
-                Search flights, discover hotels, and generate a complete travel itinerary using a multi-agent LangGraph system.
-            </p>
-        </section>
-
-        <section class="planner-card">
-
-            <div class="card-header">
-                <div>
-                    <h2>Where do you want to go?</h2>
-                    <p>
-                        Example: Plan a complete 7 days Japan trip from Bangladesh under 2 lakhs.
-                    </p>
-                </div>
-
-                <div class="status-pill">
-                    <span class="status-dot"></span>
-                    Online
-                </div>
-            </div>
-
-            <div class="input-area">
+            <div class="input-row">
                 <textarea
                     id="userInput"
-                    placeholder="Plan a complete 7 days Japan trip including flights, hotels and sightseeing under 2 lakhs..."
+                    placeholder="Example: Plan a complete 7 day Japan trip including flights, hotels and sightseeing under 2 lakhs..."
                 ></textarea>
 
                 <button id="sendBtn" onclick="sendMessage()">
-                    <span id="btnText">Generate Plan</span>
+                    <span id="btnText">Generate plan</span>
                     <span id="btnLoader" class="loader hidden"></span>
                 </button>
             </div>
 
-            <div class="quick-prompts">
-                <button onclick="setPrompt('Plan a complete 7 days Japan trip from Bangladesh including flights, hotels and sightseeing under 2 lakhs.')">
-                    Japan Trip
+            <div class="suggestions">
+                <button class="suggestion-card" style="--accent:#2f6fed" onclick="setPrompt('Plan a complete 7 days Japan trip from Delhi including flights, hotels and sightseeing under 2 lakhs.')">
+                    <span class="suggestion-icon">🗾</span>
+                    <span class="suggestion-text">
+                        <strong>Japan</strong>
+                        <small>7 days · flights + hotels</small>
+                    </span>
                 </button>
 
-                <button onclick="setPrompt('Plan a 5 days Dubai trip from Dhaka with flights, hotels and sightseeing.')">
-                    Dubai Trip
+                <button class="suggestion-card" style="--accent:#ffb020" onclick="setPrompt('Plan a 5 days Dubai trip from Delhi with flights, hotels and sightseeing.')">
+                    <span class="suggestion-icon">🕌</span>
+                    <span class="suggestion-text">
+                        <strong>Dubai</strong>
+                        <small>5 days · from Delhi</small>
+                    </span>
                 </button>
 
-                <button onclick="setPrompt('Plan a 7 days Thailand trip from Bangladesh with budget hotels and sightseeing.')">
-                    Thailand Trip
+                <button class="suggestion-card" style="--accent:#17c3a2" onclick="setPrompt('Plan a 7 days Thailand trip from Delhi with budget hotels and sightseeing.')">
+                    <span class="suggestion-icon">🛕</span>
+                    <span class="suggestion-text">
+                        <strong>Thailand</strong>
+                        <small>7 days · budget stays</small>
+                    </span>
                 </button>
 
-                <button onclick="setPrompt('Give me all country flight info.')">
-                    Global Flights
+                <button class="suggestion-card" style="--accent:#0e3a8f" onclick="setPrompt('Give me all country flight info.')">
+                    <span class="suggestion-icon">🌍</span>
+                    <span class="suggestion-text">
+                        <strong>Global flights</strong>
+                        <small>compare all routes</small>
+                    </span>
                 </button>
             </div>
 
@@ -86,7 +116,7 @@
 
             <div class="result-header">
                 <div>
-                    <h2>Your AI Travel Plan</h2>
+                    <h2>Your AI travel plan</h2>
                     <p id="threadInfo">Thread ID: -</p>
                 </div>
 
