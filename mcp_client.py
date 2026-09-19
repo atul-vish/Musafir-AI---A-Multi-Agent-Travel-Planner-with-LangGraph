@@ -37,7 +37,7 @@ WEATHER_ENV["OPENWEATHER_API_KEY"] = OPENWEATHER_API_KEY or ""
 
 # LLM
 
-llm = ChatGroq(model="llama-3.3-70b-versatile", api_key=GROQ_API_KEY)
+llm = ChatGroq(model="openai/gpt-oss-120b", api_key=GROQ_API_KEY)
 
 
 # MCP client configuration
