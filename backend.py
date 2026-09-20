@@ -58,8 +58,94 @@ if not GROQ_API_KEY:
 # =========================
 # LLM
 # =========================
+#
+# openai/gpt-oss-120b is a REASONING model. By default (reasoning_format
+# left unset -> "raw"), Groq has it write its internal chain-of-thought
+# directly into the same content string inside <think>...</think> tags,
+# and that reasoning text is generated (and billed against max_tokens)
+# BEFORE the actual answer. With a small max_tokens, the whole budget can
+# be spent on reasoning and the call finishes with an empty or half-typed
+# answer, finish_reason="length" — which is what was causing the empty
+# weather city, the truncated flight section, and the "I'm sorry, I can't
+# provide that" refusal-looking text.
+#
+# reasoning_effort="low" makes it think less for these simple lookups;
+# reasoning_format="hidden" stops any reasoning text from leaking into
+# the visible content even if it does think.
 
-llm = ChatGroq(model="llama-3.3-70b-versatile", api_key=GROQ_API_KEY)
+llm = ChatGroq(
+    model="openai/gpt-oss-120b",
+    api_key=GROQ_API_KEY,
+    reasoning_effort="low",
+    reasoning_format="hidden",
+)
+
+
+# =========================
+# Reliability helper
+# =========================
+#
+# Detects a finish_reason of "length" (i.e. "I got cut off") and
+# automatically asks the model to keep going instead of returning a
+# half-finished answer. `continuation_hint` is caller-supplied so the
+# retry instruction actually matches what that call is producing — reusing
+# itinerary-specific wording ("don't restart the itinerary") for the
+# flight/hotel/summary calls was itself causing confused, refusal-like
+# replies, since it contradicted those calls' own "no itinerary" system
+# prompts.
+
+
+def invoke_with_continuation(
+    llm_client,
+    messages,
+    max_tokens: int = 6000,
+    max_continuations: int = 3,
+    continuation_hint: str = "just keep going until the answer is complete",
+) -> str:
+    full_text = ""
+    current_messages = list(messages)
+
+    for attempt in range(max_continuations + 1):
+        response = llm_client.invoke(current_messages, max_tokens=max_tokens)
+        full_text += response.content
+
+        finish_reason = (response.response_metadata or {}).get("finish_reason")
+
+        if finish_reason != "length":
+            break
+
+        if attempt == max_continuations:
+            full_text += (
+                "\n\n[Note: this section may still be incomplete — it hit "
+                "the output limit multiple times in a row.]"
+            )
+            break
+
+        current_messages = current_messages + [
+            AIMessage(content=response.content),
+            HumanMessage(
+                content=(
+                    "You were cut off before finishing. Continue exactly "
+                    "where you left off. Do not repeat anything you "
+                    f"already wrote, and do not restart — {continuation_hint}."
+                )
+            ),
+        ]
+
+    text = full_text.strip()
+
+    # Defense in depth: if reasoning still ate the whole budget and the
+    # visible answer came back empty or as a bare refusal, don't let that
+    # leak into the final assembled answer.
+    if not text or (
+        len(text) < 60
+        and text.lower().startswith(("i'm sorry", "i am sorry", "i can't", "i cannot"))
+    ):
+        return (
+            "(This section could not be generated — please try regenerating the plan.)"
+        )
+
+    return text
 
 
 # =========================
@@ -81,22 +167,8 @@ class TravelState(TypedDict):
 # Flight Agent
 # =========================
 
-# def flight_agent(state: TravelState):
-#     query = state["user_query"]
-#     flight_data = search_flights(query)
-
-#     return {
-#         "flight_results": flight_data,
-#         "messages": [
-#             AIMessage(content="Flight results fetched.")
-#         ],
-#         "llm_calls": state.get("llm_calls", 0) + 1
-#     }
-
-
-# Flight Tool Router Prompt
 FLIGHT_AGENT_PROMPT = """
-You are a travel flight expert.
+You are a travel flight expert. Answer with FLIGHT INFORMATION ONLY.
 
 User Query:
 {query}
@@ -107,7 +179,7 @@ Airport Information:
 Airline Information:
 {airline_data}
 
-Generate:
+Give exactly these 7 points, briefly:
 
 1. Likely departure airport
 2. Likely arrival airport
@@ -117,20 +189,23 @@ Generate:
 6. Peak season pricing warning
 7. Booking advice
 
-Return concise travel guidance.
+Strict rules:
+- Do NOT include hotel recommendations.
+- Do NOT include a day-by-day itinerary.
+- Do NOT include a budget/cost summary table for the whole trip.
+- Do NOT include a checklist, packing list, or visa/currency tips.
+- Keep the whole answer under 200 words, plain text or a short table — no
+  extra sections beyond the 7 points above.
 """
 
 
-# Flight Agent
 def flight_agent(state: TravelState):
     print("\nINSIDE FLIGHT AGENT\n")
 
     query = state["user_query"]
 
     try:
-
         airports = asyncio.run(aviation_mcp_call("list_airports"))
-
         airlines = asyncio.run(aviation_mcp_call("list_airlines"))
 
         print("\nAIRPORTS:", airports)
@@ -142,17 +217,24 @@ def flight_agent(state: TravelState):
             airline_data=str(airlines)[:3000],
         )
 
-        response = llm.invoke(
+        flight_data = invoke_with_continuation(
+            llm,
             [
-                SystemMessage(content="You are an expert travel flight planner."),
+                SystemMessage(
+                    content=(
+                        "You are an expert travel flight planner. You only "
+                        "ever answer with flight-route information — never "
+                        "hotels, itineraries, or budget tables."
+                    )
+                ),
                 HumanMessage(content=prompt),
-            ]
+            ],
+            max_tokens=900,
+            max_continuations=1,
+            continuation_hint="keep going with the remaining flight points only",
         )
 
-        flight_data = response.content
-
     except Exception as e:
-
         flight_data = f"Flight information unavailable: {str(e)}"
 
     return {
@@ -165,12 +247,50 @@ def flight_agent(state: TravelState):
 # =========================
 # Hotel Agent
 # =========================
+#
+# tavily_mcp_search() returns raw MCP tool output — a list of content
+# blocks with a JSON string of search results inside. That raw blob was
+# previously being dumped straight into the "Hotel Suggestions" section
+# (the "[{'type': 'text', ...}]" mess). Now it's run through the LLM once
+# to turn it into an actual short, readable hotel list.
 
 
 def hotel_agent(state: TravelState):
     query = f"Best hotels for {state['user_query']}"
-    # hotel_results = tavily_search(query)
-    hotel_results = asyncio.run(tavily_mcp_search(query))
+    raw_results = asyncio.run(tavily_mcp_search(query))
+
+    hotel_prompt = f"""
+You are a travel hotel expert. Based on the raw search results below,
+list 3-5 specific hotel or accommodation recommendations for this trip.
+
+User Query:
+{state['user_query']}
+
+Raw search results (may include JSON, ignore the formatting):
+{str(raw_results)[:3000]}
+
+For each recommendation give: name, approximate price per night, and one
+short line on why it fits. Return ONLY a clean bullet list of hotels —
+no JSON, no raw text, no other sections, no day-by-day itinerary, no
+overall budget table.
+"""
+
+    hotel_results = invoke_with_continuation(
+        llm,
+        [
+            SystemMessage(
+                content=(
+                    "You are a hotel recommendation expert. You only ever "
+                    "answer with a short hotel list — never raw data, "
+                    "flights, or itineraries."
+                )
+            ),
+            HumanMessage(content=hotel_prompt),
+        ],
+        max_tokens=700,
+        max_continuations=1,
+        continuation_hint="keep going with the remaining hotel bullets only",
+    )
 
     return {
         "hotel_results": hotel_results,
@@ -182,24 +302,45 @@ def hotel_agent(state: TravelState):
 # =========================
 # Weather Agent
 # =========================
+#
+# extract_destination() was returning things OpenWeather's geocoder can't
+# resolve (e.g. a multi-city string like "Tokyo, Osaka" for a multi-stop
+# trip), which OpenWeather rejects with {'cod': '400', 'message': 'Nothing
+# to geocode'} — and that raw error dict was getting printed straight into
+# the final answer as if it were real weather data. extract_destination()
+# itself now returns a single geocodable "City,CountryCode" (see
+# mcp_client.py); this agent also checks for an error response and falls
+# back to a plain message instead of leaking the raw API error.
 
 
 def weather_agent(state: TravelState):
-
     city = extract_destination(state["user_query"])
 
     weather_data = asyncio.run(weather_mcp_search(city))
-
     forecast_data = asyncio.run(forecast_mcp_search(city))
 
-    return {
-        "weather_results": f"""
-        Current Weather:
-        {weather_data}
+    if not isinstance(weather_data, dict) or "cod" in weather_data:
+        weather_results = (
+            f"Live weather data isn't available for '{city}' right now. "
+            "Check a forecast site closer to your travel dates."
+        )
+    else:
+        forecast_lines = (
+            "\n".join(
+                f"- {f['datetime']}: {f['temperature']}°C, {f['weather']}"
+                for f in forecast_data
+            )
+            if isinstance(forecast_data, list) and forecast_data
+            else "Forecast unavailable."
+        )
 
-        Forecast:
-        {forecast_data}
-        """,
+        weather_results = f"""Current weather in {weather_data['city']}: {weather_data['temperature_c']}°C (feels like {weather_data['feels_like_c']}°C), {weather_data['condition']}, humidity {weather_data['humidity']}%, wind {weather_data['wind_speed']} m/s.
+
+Upcoming forecast:
+{forecast_lines}"""
+
+    return {
+        "weather_results": weather_results,
         "messages": [AIMessage(content="Weather information fetched")],
     }
 
@@ -211,33 +352,59 @@ def weather_agent(state: TravelState):
 
 def itinerary_agent(state: TravelState):
     prompt = f"""
-Create a complete travel itinerary.
+Create ONLY a day-by-day travel itinerary for this trip — nothing else.
+Cover every single day from Day 1 through the final day — do not stop
+early, do not summarize remaining days, and do not skip any day.
 
 User Query:
 {state['user_query']}
 
-Flight Results:
+Flight Results (for context only — do not repeat these):
 {state['flight_results']}
 
-Hotel Results:
+Hotel Results (for context only — do not repeat these):
 {state['hotel_results']}
 
-Weather Results:
+Weather Results (for context only — do not repeat this):
 {state['weather_results']}
 
-Make the itinerary practical, budget-aware, and easy to follow.
+For each day, output:
+- A short heading: "Day N – [City] – [theme]"
+- A table with columns Time | Activity | Cost
+- A "Day N total" row with the day's approximate cost
+
+Strict rules — do NOT include any of the following, even briefly:
+- A trip overview or introduction
+- A restated flight plan or airline list
+- A restated hotel list
+- A grand total / overall budget summary table
+- A packing list, checklist, or visa/currency tips
+- A "quick summary" table or a closing "final word" section
+
+Stop as soon as the last day's table and total are written. Nothing
+after that.
 """
 
-    response = llm.invoke(
+    itinerary_text = invoke_with_continuation(
+        llm,
         [
-            SystemMessage(content="You are an expert travel planner."),
+            SystemMessage(
+                content=(
+                    "You are an expert travel planner who writes ONLY "
+                    "day-by-day itinerary tables — never overviews, "
+                    "budget summaries, checklists, or wrap-ups."
+                )
+            ),
             HumanMessage(content=prompt),
-        ]
+        ],
+        max_tokens=6000,
+        max_continuations=3,
+        continuation_hint="keep going until every remaining day's table and total are written",
     )
 
     return {
-        "itinerary": response.content,
-        "messages": [response],
+        "itinerary": itinerary_text,
+        "messages": [AIMessage(content=itinerary_text)],
         "llm_calls": state.get("llm_calls", 0) + 1,
     }
 
@@ -245,55 +412,74 @@ Make the itinerary practical, budget-aware, and easy to follow.
 # =========================
 # Final Response Agent
 # =========================
+#
+# IMPORTANT: this used to ask the LLM to regenerate the *entire* itinerary
+# again inside the "final" formatted answer. That second full-length
+# generation, with no max_tokens set, was the actual source of the
+# truncated 7-day plans — it ran out of output tokens partway through
+# re-typing days that had already been generated correctly once.
+#
+# Now we only ask the LLM for a short summary + recommendations, and
+# splice in the flight/hotel/weather/itinerary text we already have
+# verbatim. Nothing that's already been generated gets regenerated.
 
 
 def final_agent(state: TravelState):
-    final_prompt = f"""
-Generate the final travel response for the user.
+    summary_prompt = f"""
+Based on the details below, write exactly two short sections and nothing
+else:
+
+1. "Trip Summary" — 2-3 sentences overview of the trip.
+2. "Final Recommendations" — 3-4 concise bullet points of practical tips.
 
 User Request:
 {state['user_query']}
 
-Flights:
-{state['flight_results']}
+Itinerary (for context only — do NOT repeat, list, or re-describe it):
+{state['itinerary'][:1500]}
 
-Hotels:
-{state['hotel_results']}
-
-Weather:
+Weather (for context only — do NOT repeat it):
 {state['weather_results']}
 
-Itinerary:
-{state['itinerary']}
-
-Format the final answer beautifully using these sections:
-
-1. Trip Summary
-2. Flight Information
-3. Hotel Suggestions
-4. Weather Information
-5. Day-by-Day Itinerary
-6. Estimated Budget
-7. Final Recommendations
-
-
-Important:
-- Be clear and practical.
-- Mention that live flight API may not provide ticket prices if pricing is unavailable.
-- Include weather-based travel advice.
-- Keep the response useful for real travel planning.
+Strict rules: do not include flight info, hotel info, a budget table, a
+checklist, or the day-by-day itinerary — those are added separately by
+the app. Total output under 120 words.
 """
 
-    response = llm.invoke(
+    summary_text = invoke_with_continuation(
+        llm,
         [
             SystemMessage(
                 content="You are a professional AI travel booking assistant."
             ),
-            HumanMessage(content=final_prompt),
-        ]
+            HumanMessage(content=summary_prompt),
+        ],
+        max_tokens=600,
+        max_continuations=1,
+        continuation_hint="keep going with the remaining recommendation bullets only",
     )
 
-    return {"messages": [response], "llm_calls": state.get("llm_calls", 0) + 1}
+    final_answer = f"""{summary_text}
+
+## Flight Information
+{state['flight_results']}
+
+## Hotel Suggestions
+{state['hotel_results']}
+
+## Weather Information
+{state['weather_results']}
+
+## Day-by-Day Itinerary
+{state['itinerary']}
+
+*Note: live flight data may not include ticket prices if pricing is unavailable from the source API.*
+"""
+
+    return {
+        "messages": [AIMessage(content=final_answer)],
+        "llm_calls": state.get("llm_calls", 0) + 1,
+    }
 
 
 # =========================

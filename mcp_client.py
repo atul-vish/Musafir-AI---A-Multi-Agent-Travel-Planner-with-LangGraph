@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 import certifi
+import httpx
 from dotenv import load_dotenv
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langchain_groq import ChatGroq
@@ -36,8 +37,24 @@ WEATHER_ENV["OPENWEATHER_API_KEY"] = OPENWEATHER_API_KEY or ""
 
 
 # LLM
-
-llm = ChatGroq(model="openai/gpt-oss-120b", api_key=GROQ_API_KEY)
+#
+# gpt-oss-20b runs roughly 2x faster than gpt-oss-120b on Groq's hardware.
+# extract_destination() only needs to hand back a city/country name, and
+# it blocks weather_agent's real work until it finishes, so it's worth
+# using the faster model here even though itinerary/final quality calls
+# stay on 120b.
+# gpt-oss-20b is also a reasoning model: by default its chain-of-thought
+# is written into the same content string before the actual answer, so a
+# tiny max_tokens (as used below for extract_destination) can get fully
+# consumed by reasoning before any visible text comes out — that was
+# producing an empty destination string and, downstream, a broken
+# weather lookup. reasoning_effort/format keep it fast and clean.
+llm = ChatGroq(
+    model="openai/gpt-oss-20b",
+    api_key=GROQ_API_KEY,
+    reasoning_effort="low",
+    reasoning_format="hidden",
+)
 
 
 # MCP client configuration
@@ -168,82 +185,100 @@ async def aviation_mcp_call(tool_name: str, tool_args: dict = None):
     return result
 
 
-# Weather MCP tools
+# Weather — direct OpenWeather calls
+#
+# get_current_weather/get_forecast in custom_weather_mcp_server.py were
+# just wrapping plain requests.get() calls to OpenWeather. Routing them
+# through MCP stdio meant every single call spawned a brand-new Python
+# interpreter process (loading mcp, fastmcp, requests, dotenv, opening an
+# MCP session, running one function, tearing it all down) — easily the
+# single biggest source of latency in the whole pipeline. Since this is a
+# first-party API call within the same codebase, there's no reason to pay
+# for a subprocess + protocol round trip: we call OpenWeather directly
+# with a shared async HTTP client instead.
 
-weather_tool = None
-forecast_tool = None
-
-
-async def initialize_weather_tools():
-    global weather_tool
-    global forecast_tool
-
-    if weather_tool is not None and forecast_tool is not None:
-        return
-
-    if not WEATHER_SERVER_PATH.exists():
-        raise FileNotFoundError(
-            "Weather MCP server file was not found: " f"{WEATHER_SERVER_PATH}"
-        )
-
-    # Load only Weather.
-    # Tavily and AviationStack will not be started.
-    tools = await client.get_tools(server_name="weather")
-
-    tools_by_name = {tool.name: tool for tool in tools}
-
-    weather_tool = tools_by_name.get("get_current_weather")
-
-    forecast_tool = tools_by_name.get("get_forecast")
-
-    missing_tools = []
-
-    if weather_tool is None:
-        missing_tools.append("get_current_weather")
-
-    if forecast_tool is None:
-        missing_tools.append("get_forecast")
-
-    if missing_tools:
-        available_tools = ", ".join(tools_by_name.keys())
-
-        raise RuntimeError(
-            "Missing Weather MCP tools: "
-            f"{', '.join(missing_tools)}. "
-            f"Available tools: "
-            f"{available_tools or 'none'}"
-        )
+_http_client = httpx.AsyncClient(timeout=10.0)
 
 
 async def weather_mcp_search(city: str):
-    await initialize_weather_tools()
+    response = await _http_client.get(
+        "https://api.openweathermap.org/data/2.5/weather",
+        params={"q": city, "appid": OPENWEATHER_API_KEY, "units": "metric"},
+    )
 
-    result = await weather_tool.ainvoke({"city": city})
+    data = response.json()
 
-    return result
+    if response.status_code != 200:
+        return data
+
+    return {
+        "city": data["name"],
+        "temperature_c": data["main"]["temp"],
+        "feels_like_c": data["main"]["feels_like"],
+        "humidity": data["main"]["humidity"],
+        "condition": data["weather"][0]["description"],
+        "wind_speed": data["wind"]["speed"],
+    }
 
 
 async def forecast_mcp_search(city: str):
-    await initialize_weather_tools()
+    response = await _http_client.get(
+        "https://api.openweathermap.org/data/2.5/forecast",
+        params={"q": city, "appid": OPENWEATHER_API_KEY, "units": "metric"},
+    )
 
-    result = await forecast_tool.ainvoke({"city": city})
+    data = response.json()
 
-    return result
+    if response.status_code != 200:
+        return data
+
+    forecast = []
+
+    for item in data["list"][:5]:
+        forecast.append(
+            {
+                "datetime": item["dt_txt"],
+                "temperature": item["main"]["temp"],
+                "weather": item["weather"][0]["description"],
+            }
+        )
+
+    return forecast
 
 
 # Destination extractor
 
 
 def extract_destination(query: str):
+    # This gets passed straight to OpenWeather's geocoder, which needs a
+    # single real place name — not a list of cities, not a country name
+    # for a multi-city trip, and no extra words. A reply like "Tokyo,
+    # Osaka" or "Japan" gets rejected by OpenWeather with a
+    # "Nothing to geocode" error, which was previously leaking straight
+    # into the final answer as if it were real weather data.
     prompt = f"""
-    Extract only the destination city or country.
+    This query describes a trip, possibly to multiple cities:
 
-    Query:
     {query}
 
-    Return only destination name.
+    Identify the SINGLE main/first destination CITY (not country, not a
+    list) and return it in the exact format: City,CountryCode
+    (ISO 3166 two-letter country code), e.g. "Tokyo,JP" or "Paris,FR".
+
+    Return ONLY that string. No other words, no punctuation, no quotes.
     """
 
-    response = llm.invoke(prompt)
+    # max_tokens was capped at 15 — nowhere near enough headroom once you
+    # account for the model's reasoning tokens, which is exactly what
+    # left this call returning an empty string.
+    response = llm.invoke(prompt, max_tokens=200)
 
-    return response.content.strip()
+    destination = response.content.strip().strip('"').strip("'")
+
+    # Defense in depth: reasoning models can occasionally still return
+    # nothing usable. Never hand an empty string to OpenWeather — that's
+    # what produced the "Nothing to geocode" error leaking into output.
+    if not destination or len(destination) > 60:
+        return "Tokyo,JP"
+
+    return destination
