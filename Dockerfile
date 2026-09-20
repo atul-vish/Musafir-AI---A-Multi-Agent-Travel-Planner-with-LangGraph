@@ -1,4 +1,4 @@
-FROM python:3.12-slim-bookwormokworm
+FROM python:3.12-slim-bookworm
 
 WORKDIR /app
 
@@ -19,11 +19,12 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
 
 COPY . .
 
-RUN groupadd --system app && useradd --system --gid app --create-home --home-dir /home/app app \
+RUN groupadd --system app \
+    && useradd --system --gid app --create-home --home-dir /home/app app \
     && chown -R app:app /app
 
 USER app
 
 EXPOSE 8001
 
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8001"]
+CMD ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port ${PORT:-8001}"]
