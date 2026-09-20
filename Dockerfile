@@ -1,5 +1,8 @@
 FROM python:3.12-slim-bookworm
 
+# Install uv + uvx
+COPY --from=ghcr.io/astral-sh/uv:0.12.17 /uv /uvx /bin/
+
 WORKDIR /app
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
