@@ -221,23 +221,57 @@ async def weather_mcp_search(city: str):
     }
 
 
-async def forecast_mcp_search(city: str):
-    response = await _http_client.get(
-        "https://api.openweathermap.org/data/2.5/forecast",
-        params={"q": city, "appid": OPENWEATHER_API_KEY, "units": "metric"},
-    )
+async def forecast_mcp_search(city: str, travel_days: int = 5):
+    url = "https://api.openweathermap.org/data/2.5/forecast"
 
+    params = {
+        "q": city,
+        "appid": OPENWEATHER_API_KEY,
+        "units": "metric",
+    }
+
+    response = await _http_client.get(url, params=params)
     data = response.json()
 
     if response.status_code != 200:
         return data
 
+    daily_forecasts = {}
+
+    for item in data.get("list", []):
+        datetime_text = item["dt_txt"]
+        date = datetime_text.split(" ")[0]
+        time = datetime_text.split(" ")[1]
+
+        # Store only the forecast closest to 12:00 PM
+        target_time = "12:00:00"
+
+        if date not in daily_forecasts:
+            daily_forecasts[date] = item
+        else:
+            existing_time = daily_forecasts[date]["dt_txt"].split(" ")[1]
+
+            # Choose the timestamp closest to 12:00 PM
+            current_distance = abs(int(time[:2]) * 60 + int(time[3:5]) - 720)
+
+            existing_distance = abs(
+                int(existing_time[:2]) * 60 + int(existing_time[3:5]) - 720
+            )
+
+            if current_distance < existing_distance:
+                daily_forecasts[date] = item
+
+    # Keep only the requested number of travelling days
+    selected_forecasts = list(daily_forecasts.values())[:travel_days]
+
     forecast = []
 
-    for item in data["list"][:5]:
+    for item in selected_forecasts:
         forecast.append(
             {
                 "datetime": item["dt_txt"],
+                "date": item["dt_txt"].split(" ")[0],
+                "time": item["dt_txt"].split(" ")[1],
                 "temperature": item["main"]["temp"],
                 "weather": item["weather"][0]["description"],
             }

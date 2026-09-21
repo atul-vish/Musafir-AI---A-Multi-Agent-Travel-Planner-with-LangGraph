@@ -1,5 +1,6 @@
 import os
 import certifi
+import re
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -313,35 +314,168 @@ overall budget table.
 # back to a plain message instead of leaking the raw API error.
 
 
+def extract_travel_days(query: str) -> int:
+    """
+    Extract trip duration from the user's query.
+    Examples:
+    - 5 day trip
+    - 5 days in Bangkok
+    - Bangkok for 4 days
+    """
+
+    patterns = [
+        r"(\d+)\s*[-]?\s*day(?:s)?",
+        r"for\s+(\d+)\s*day(?:s)?",
+        r"(\d+)\s*day(?:s)?\s*trip",
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, query.lower())
+
+        if match:
+            days = int(match.group(1))
+
+            # Keep it within OpenWeather's available forecast range
+            return max(1, days)
+
+    # Default
+    return 5
+
+
 def weather_agent(state: TravelState):
     city = extract_destination(state["user_query"])
+    travel_days = extract_travel_days(state["user_query"])
 
     weather_data = asyncio.run(weather_mcp_search(city))
-    forecast_data = asyncio.run(forecast_mcp_search(city))
+    forecast_data = asyncio.run(forecast_mcp_search(city, travel_days))
 
     if not isinstance(weather_data, dict) or "cod" in weather_data:
         weather_results = (
             f"Live weather data isn't available for '{city}' right now. "
             "Check a forecast site closer to your travel dates."
         )
+
     else:
-        forecast_lines = (
-            "\n".join(
-                f"- {f['datetime']}: {f['temperature']}°C, {f['weather']}"
-                for f in forecast_data
+
+        # -----------------------------
+        # CURRENT WEATHER
+        # -----------------------------
+
+        current_temp = weather_data.get("temperature_c", "N/A")
+
+        current_condition = weather_data.get("condition", "Unknown")
+
+        condition_lower = current_condition.lower()
+
+        if "rain" in condition_lower:
+            current_recommendation = "🌧️ Keep an umbrella handy."
+
+        elif "storm" in condition_lower or "thunder" in condition_lower:
+            current_recommendation = "⛈️ Consider indoor plans during stormy periods."
+
+        elif "clear" in condition_lower:
+            current_recommendation = "😎 Clear skies — great time to explore!"
+
+        elif "cloud" in condition_lower:
+            current_recommendation = (
+                "☁️ A little cloudy — nice weather for sightseeing."
             )
-            if isinstance(forecast_data, list) and forecast_data
-            else "Forecast unavailable."
-        )
 
-        weather_results = f"""Current weather in {weather_data['city']}: {weather_data['temperature_c']}°C (feels like {weather_data['feels_like_c']}°C), {weather_data['condition']}, humidity {weather_data['humidity']}%, wind {weather_data['wind_speed']} m/s.
+        elif current_temp != "N/A" and current_temp >= 35:
+            current_recommendation = (
+                "🥵 It's warm — plan outdoor activities earlier in the day."
+            )
 
-Upcoming forecast:
-{forecast_lines}"""
+        else:
+            current_recommendation = "👍 Looks comfortable for exploring."
+
+        # -----------------------------
+        # DAILY TRAVEL FORECAST
+        # -----------------------------
+
+        forecast_lines = []
+
+        if isinstance(forecast_data, list) and forecast_data:
+
+            for index, forecast in enumerate(forecast_data, start=1):
+
+                temperature = forecast.get("temperature", "N/A")
+
+                condition = forecast.get("weather", "Unknown")
+
+                date = forecast.get("date", "")
+
+                time = forecast.get("time", "12:00:00")
+
+                # Convert 24-hour time
+                hour = int(time.split(":")[0])
+
+                if hour == 0:
+                    display_time = "12:00 AM"
+                elif hour < 12:
+                    display_time = f"{hour}:00 AM"
+                elif hour == 12:
+                    display_time = "12:00 PM"
+                else:
+                    display_time = f"{hour - 12}:00 PM"
+
+                condition_lower = condition.lower()
+
+                # Friendly recommendation
+                if "storm" in condition_lower or "thunder" in condition_lower:
+                    recommendation = "⛈️ Keep outdoor plans flexible."
+
+                elif "rain" in condition_lower:
+                    recommendation = "🌧️ Keep an umbrella handy."
+
+                elif "clear" in condition_lower:
+
+                    if isinstance(temperature, (int, float)) and temperature >= 35:
+                        recommendation = "🥵 Start sightseeing early to avoid the heat."
+                    else:
+                        recommendation = "😎 Clear skies — great for exploring!"
+
+                elif "cloud" in condition_lower:
+                    recommendation = "☁️ Nice conditions for sightseeing."
+
+                elif isinstance(temperature, (int, float)) and temperature >= 35:
+                    recommendation = "☀️ It's warm — plan outdoor activities earlier."
+
+                else:
+                    recommendation = "👍 Comfortable weather for exploring."
+
+                forecast_lines.append(
+                    f"**Day {index} — {date} at {display_time}**  \n"
+                    f"🌡️ **{temperature}°C** | "
+                    f"☁️ **{condition.title()}**  \n"
+                    f"💡 {recommendation}"
+                )
+
+            forecast_text = "\n\n".join(forecast_lines)
+
+        else:
+            forecast_text = "Forecast unavailable."
+
+        # -----------------------------
+        # FINAL WEATHER RESPONSE
+        # -----------------------------
+
+        weather_results = f"""
+### 🌤️ Weather in {weather_data['city']}
+
+**Current:** 🌡️ {current_temp}°C | ☁️ {current_condition.title()}
+
+**Recommendation:** {current_recommendation}
+
+### 📅 Upcoming Forecast
+
+{forecast_text}
+"""
 
     return {
+        **state,
         "weather_results": weather_results,
-        "messages": [AIMessage(content="Weather information fetched")],
+        "messages": state["messages"] + [HumanMessage(content=weather_results)],
     }
 
 
