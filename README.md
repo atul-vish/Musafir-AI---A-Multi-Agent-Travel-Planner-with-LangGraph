@@ -1,250 +1,395 @@
-# ✈️ Musafir AI — Multi-Agent Travel Planner
+# ✈️ Musafir AI
 
-> An AI-powered, multi-agent travel planning system that transforms natural-language travel requests into personalized trip plans using **LangGraph, LangChain, FastAPI, Groq, Tavily, AviationStack, and PostgreSQL**.
+### MCP-Enabled Multi-Agent AI Travel Planner
 
-<p align="center">
+> **An AI-powered travel planning system built with Multi-Agent Architecture, LangGraph, MCP, LLMs, external tools, and real-time travel data integrations.**
 
-🚀 **[Try Musafir AI Live](https://musafir-ai-a-multi-agent-travel-planner.onrender.com)**
-
-</p>
-
----
-
-## 📌 Overview
-
-**Musafir AI** is an end-to-end AI travel planning application designed to automate the process of researching and organizing a trip.
-
-Instead of manually searching across multiple platforms for flights, hotels, and activities, users can simply describe their travel requirements in natural language.
-
-Musafir AI uses a **multi-agent architecture orchestrated with LangGraph**, where specialized AI agents collaborate to research different aspects of a trip and produce a structured travel plan.
-
-### Example
-
-A user can enter:
-
-> "Plan a 5-day trip to Tokyo with a budget of $1500."
-
-The system can then coordinate multiple agents to generate:
-
-* ✈️ Flight information
-* 🏨 Hotel suggestions
-* 🗺️ Day-by-day itinerary
-* 💰 Budget-aware recommendations
-* 📝 A final consolidated travel plan
+[![Live Demo](https://img.shields.io/badge/Live-Demo-00C853?style=for-the-badge)](https://musafir-ai-a-multi-agent-travel-planner.onrender.com)
+[![Python](https://img.shields.io/badge/Python-3.12+-3776AB?style=flat-square\&logo=python\&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?style=flat-square\&logo=fastapi\&logoColor=white)](https://fastapi.tiangolo.com/)
+[![LangGraph](https://img.shields.io/badge/LangGraph-Agent_Orchestration-1C3C3C?style=flat-square)](https://www.langchain.com/langgraph)
+[![LangChain](https://img.shields.io/badge/LangChain-LLM_Framework-1C3C3C?style=flat-square)](https://www.langchain.com/)
+[![MCP](https://img.shields.io/badge/MCP-Tool_Integration-8B5CF6?style=flat-square)](https://modelcontextprotocol.io/)
+[![Groq](https://img.shields.io/badge/Groq-LLM_Inference-F55036?style=flat-square)](https://groq.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-4169E1?style=flat-square\&logo=postgresql\&logoColor=white)](https://www.postgresql.org/)
+[![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?style=flat-square\&logo=docker\&logoColor=white)](https://www.docker.com/)
+[![Render](https://img.shields.io/badge/Render-Deployed-46E3B7?style=flat-square)](https://render.com/)
 
 ---
 
-## 🎯 Problem Statement
+## 🌐 Live Application
 
-Travel planning often requires switching between multiple websites and applications to research:
+### [🚀 Launch Musafir AI](https://musafir-ai-a-multi-agent-travel-planner.onrender.com)
 
-* Flights
-* Hotels
-* Tourist attractions
-* Daily activities
-* Travel budgets
-* Itineraries
-
-This process can be time-consuming and fragmented.
-
-**Musafir AI brings these tasks into a single AI-powered workflow using autonomous agents.**
+Musafir AI transforms natural-language travel requirements into structured travel plans by combining **LLM reasoning, multi-agent orchestration, MCP-based tool integration, external APIs, web search, and persistent application state**.
 
 ---
 
-## 💡 Solution
+# 🧠 What is Musafir AI?
 
-Musafir AI divides the travel-planning process into specialized agents.
+**Musafir AI** is an end-to-end **Multi-Agent AI Travel Planner** designed to automate complex travel research and planning workflows.
+
+Instead of manually switching between flight websites, hotel platforms, search engines, travel guides, and itinerary planners, users can simply describe their requirements in natural language.
+
+For example:
 
 ```text
-                     USER REQUEST
-                          │
-                          ▼
-                  ┌───────────────┐
-                  │   FastAPI     │
-                  │    Backend    │
-                  └───────┬───────┘
-                          │
-                          ▼
-                  ┌───────────────┐
-                  │   LangGraph   │
-                  │ Orchestrator  │
-                  └───────┬───────┘
-                          │
-          ┌───────────────┼───────────────┐
-          ▼               ▼               ▼
-   ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
-   │Flight Agent │ │ Hotel Agent │ │ Itinerary   │
-   │             │ │             │ │   Agent     │
-   └──────┬──────┘ └──────┬──────┘ └──────┬──────┘
-          │               │               │
-          ▼               ▼               ▼
-    AviationStack      Tavily Search   LLM Planning
-          │               │               │
-          └───────────────┼───────────────┘
-                          ▼
-                  ┌───────────────┐
-                  │ Final Response│
-                  │     Agent     │
-                  └───────┬───────┘
-                          │
-                          ▼
-                   TRAVEL PLAN
+Plan a 5-day trip to Tokyo with a budget of $1500.
+
+I need:
+- Flight suggestions
+- Affordable hotels
+- Popular attractions
+- A day-by-day itinerary
+- Budget-aware recommendations
+```
+
+Musafir AI processes the request through a coordinated AI workflow consisting of specialized agents and external tools.
+
+---
+
+# 🚀 What Makes This Project Different?
+
+Musafir AI is not designed as a simple:
+
+```text
+User → LLM → Response
+```
+
+Instead, it follows an **agentic AI architecture**:
+
+```text
+User
+ │
+ ▼
+FastAPI
+ │
+ ▼
+LangGraph Orchestrator
+ │
+ ├───────────────┐
+ ▼               ▼
+Specialized     MCP
+Agents           Tools
+ │               │
+ └───────┬───────┘
+         ▼
+External APIs / Search
+         │
+         ▼
+Final Response Agent
+         │
+         ▼
+Structured Travel Plan
+```
+
+The project demonstrates practical AI engineering concepts including:
+
+* Multi-Agent Systems
+* LLM orchestration
+* LangGraph state management
+* Model Context Protocol (MCP)
+* Tool calling
+* External API integration
+* Web search
+* PostgreSQL persistence
+* FastAPI backend development
+* Docker containerization
+* Cloud deployment
+
+---
+
+# 🔌 MCP — Model Context Protocol
+
+Musafir AI integrates **Model Context Protocol (MCP)** to provide a standardized architecture for connecting AI agents with external tools and capabilities.
+
+Instead of tightly coupling every external capability directly to the agent, MCP provides a tool-oriented integration layer.
+
+```text
+                  ┌─────────────────────┐
+                  │     AI Agent        │
+                  │                     │
+                  │    LangGraph        │
+                  └──────────┬──────────┘
+                             │
+                             ▼
+                  ┌─────────────────────┐
+                  │     MCP Client      │
+                  └──────────┬──────────┘
+                             │
+                             ▼
+                  ┌─────────────────────┐
+                  │     MCP Server      │
+                  │                     │
+                  │      Tools          │
+                  └──────────┬──────────┘
+                             │
+              ┌──────────────┼──────────────┐
+              ▼              ▼              ▼
+        Flight Tools    Search Tools    Other Tools
+              │              │              │
+              └──────────────┼──────────────┘
+                             ▼
+                       External Data
+```
+
+### Why MCP?
+
+MCP makes the architecture more extensible by creating a clear separation between:
+
+```text
+AI Reasoning
+     │
+     ▼
+Tool Interface
+     │
+     ▼
+External Capability
+```
+
+This allows additional tools and integrations to be introduced without tightly coupling every capability to the core agent implementation.
+
+---
+
+# 🏗️ System Architecture
+
+```text
+                         ┌───────────────────┐
+                         │       USER        │
+                         │ Natural Language  │
+                         │   Travel Request  │
+                         └─────────┬─────────┘
+                                   │
+                                   ▼
+                         ┌───────────────────┐
+                         │      FastAPI      │
+                         │    API / Web      │
+                         │      Layer        │
+                         └─────────┬─────────┘
+                                   │
+                                   ▼
+                         ┌───────────────────┐
+                         │     LangGraph     │
+                         │ Agent Orchestrator│
+                         └─────────┬─────────┘
+                                   │
+              ┌────────────────────┼────────────────────┐
+              │                    │                    │
+              ▼                    ▼                    ▼
+       ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+       │ Flight Agent │     │ Hotel Agent  │     │ Itinerary    │
+       │              │     │              │     │ Agent        │
+       └──────┬───────┘     └──────┬───────┘     └──────┬───────┘
+              │                    │                    │
+              └────────────────────┼────────────────────┘
+                                   │
+                                   ▼
+                         ┌───────────────────┐
+                         │    MCP Client     │
+                         └─────────┬─────────┘
+                                   │
+                                   ▼
+                         ┌───────────────────┐
+                         │    MCP Server     │
+                         │      Tools        │
+                         └─────────┬─────────┘
+                                   │
+                  ┌────────────────┼────────────────┐
+                  ▼                ▼                ▼
+             Flight API       Web Search       Other Tools
+                  │                │                │
+                  └────────────────┼────────────────┘
+                                   │
+                                   ▼
+                         ┌───────────────────┐
+                         │   Final Response  │
+                         │      Agent        │
+                         └─────────┬─────────┘
+                                   │
+                                   ▼
+                         ┌───────────────────┐
+                         │  Structured Trip  │
+                         │       Plan        │
+                         └─────────┬─────────┘
+                                   │
+                                   ▼
+                         ┌───────────────────┐
+                         │    PostgreSQL     │
+                         │ State / Persistence│
+                         └───────────────────┘
 ```
 
 ---
 
-## ✨ Key Features
+# 🤖 Multi-Agent Architecture
 
-### 🤖 Multi-Agent Architecture
+Musafir AI separates travel planning into specialized responsibilities.
 
-Specialized agents collaborate to handle different parts of the travel-planning workflow.
+### ✈️ Flight Research Agent
 
-* Flight Research Agent
-* Hotel Research Agent
-* Itinerary Planning Agent
-* Final Response Agent
+Responsible for flight-related research and retrieval.
 
-### 🧠 LangGraph Orchestration
+Primary integrations include:
 
-LangGraph manages the agent workflow and state transitions, allowing multiple specialized agents to work together as a coordinated system.
-
-### ✈️ Flight Research
-
-Uses **AviationStack** to retrieve flight-related information based on the travel request.
-
-### 🏨 Hotel Research
-
-Uses **Tavily Search** to discover relevant accommodation options and travel information.
-
-### 🗺️ AI Itinerary Generation
-
-The itinerary agent converts the collected travel information into a structured day-by-day plan.
-
-### 💬 Natural-Language Interaction
-
-Users don't need to fill out complicated forms.
-
-They can simply describe their trip naturally.
-
-Example:
-
-```text
-I want to visit Dubai for 4 days with a budget of ₹80,000.
-Suggest flights, hotels and places to visit.
-```
-
-### 💾 Persistent Conversation State
-
-PostgreSQL is used for storing application state and supporting persistent conversations.
-
-### ⚡ LLM-Powered Responses
-
-Groq-powered LLM inference is used to generate fast AI responses.
-
-### 🌐 Web Application
-
-A FastAPI backend serves the application with a lightweight HTML/CSS/JavaScript frontend.
+* AviationStack
+* MCP-based tool integration
 
 ---
 
-## 🏗️ System Architecture
+### 🏨 Hotel Research Agent
+
+Responsible for discovering accommodation options and relevant travel information.
+
+Primary integration:
+
+* Tavily Search
+
+---
+
+### 🗺️ Itinerary Agent
+
+Transforms collected travel context into a structured itinerary.
+
+Responsibilities include:
+
+* Destination planning
+* Activity organization
+* Schedule generation
+* Budget-aware reasoning
+* Travel recommendations
+
+---
+
+### 🧠 Final Response Agent
+
+Aggregates the outputs from the specialized agents and generates the final user-facing travel plan.
 
 ```text
-┌─────────────────────────────────────────────┐
-│                  USER                       │
-│       Natural Language Travel Request       │
-└──────────────────────┬──────────────────────┘
-                       │
-                       ▼
-┌─────────────────────────────────────────────┐
-│                FASTAPI                      │
-│             API / Web Layer                 │
-└──────────────────────┬──────────────────────┘
-                       │
-                       ▼
-┌─────────────────────────────────────────────┐
-│               LANGGRAPH                     │
-│          Multi-Agent Orchestrator           │
-└──────────────┬──────────┬──────────┬────────┘
-               │          │          │
-               ▼          ▼          ▼
-          Flight Agent  Hotel Agent  Itinerary
-               │          │          │
-               ▼          ▼          ▼
-         AviationStack  Tavily      Groq LLM
-               │          │          │
-               └──────────┼──────────┘
-                          ▼
-                 Final Response Agent
-                          │
-                          ▼
-                 Structured Travel Plan
-                          │
-                          ▼
-                     PostgreSQL
+Flight Research
+       │
+       ▼
+Hotel Research
+       │
+       ▼
+Itinerary Planning
+       │
+       ▼
+Final Response Agent
+       │
+       ▼
+Structured Travel Plan
 ```
 
 ---
 
-## 🔄 How It Works
+# 🔄 End-to-End Workflow
 
-### 1. User Input
-
-The user submits a natural-language travel request.
+### 01 — User Request
 
 ```text
-Plan a 3-day trip to Tokyo with a budget of $1200.
+Plan a 4-day trip to Dubai with a budget of ₹80,000.
+Find flights, hotels and places to visit.
 ```
 
-### 2. Request Processing
+### 02 — API Layer
 
-FastAPI receives and processes the request.
+FastAPI receives the request.
 
-### 3. Agent Orchestration
+### 03 — Agent Orchestration
 
-LangGraph determines the workflow and coordinates the specialized agents.
+LangGraph manages the execution flow and agent state.
 
-### 4. Flight Research
+### 04 — Tool Selection
 
-The flight agent retrieves flight-related information through AviationStack.
+Agents determine which external capabilities are required.
 
-### 5. Hotel Research
+### 05 — MCP Integration
 
-The hotel agent uses Tavily to search for relevant accommodation and travel information.
+The MCP client communicates with the MCP server to access supported tools.
 
-### 6. Itinerary Planning
+### 06 — External Data Retrieval
 
-The itinerary agent combines the available information and generates a practical schedule.
+The system retrieves relevant information through external APIs and web search.
 
-### 7. Final Response
+### 07 — Itinerary Generation
 
-The final response agent consolidates the results into a user-friendly travel plan.
+The itinerary agent converts the collected context into a structured schedule.
 
-### 8. State Persistence
+### 08 — Response Synthesis
 
-Relevant conversation/application state can be persisted using PostgreSQL.
+The final response agent combines the outputs.
 
----
+### 09 — Persistence
 
-## 🛠️ Tech Stack
+Relevant application state can be stored in PostgreSQL.
 
-| Category         | Technology            |
-| ---------------- | --------------------- |
-| Language         | Python                |
-| Backend          | FastAPI               |
-| AI Orchestration | LangGraph             |
-| LLM Framework    | LangChain             |
-| LLM Inference    | Groq                  |
-| Web Search       | Tavily                |
-| Flight Data      | AviationStack         |
-| Database         | PostgreSQL            |
-| Frontend         | HTML, CSS, JavaScript |
-| Templating       | Jinja2                |
-| Deployment       | Render                |
+### 10 — User Response
+
+The user receives a consolidated travel plan.
 
 ---
 
-## 📁 Project Structure
+# ✨ Core Features
+
+| Feature               | Description                                   |
+| --------------------- | --------------------------------------------- |
+| 🤖 Multi-Agent System | Specialized agents for different travel tasks |
+| 🧠 LangGraph          | Agent workflow and state orchestration        |
+| 🔌 MCP                | Standardized AI-to-tool integration           |
+| 🛠️ Tool Calling      | Agents interact with external capabilities    |
+| ✈️ Flight Research    | Flight-related information retrieval          |
+| 🏨 Hotel Research     | Accommodation discovery                       |
+| 🗺️ AI Itinerary      | Day-by-day itinerary generation               |
+| 💬 Natural Language   | No complex travel forms                       |
+| ⚡ Fast LLM Inference  | Groq-powered inference                        |
+| 🔎 Web Research       | Tavily-powered search                         |
+| 💾 Persistent State   | PostgreSQL-backed persistence                 |
+| 🌐 REST API           | FastAPI backend                               |
+| 🐳 Docker             | Containerized deployment                      |
+| ☁️ Cloud Deployment   | Render                                        |
+
+---
+
+# 🛠️ Technology Stack
+
+## AI / Agent Layer
+
+* **Python**
+* **LangGraph**
+* **LangChain**
+* **Groq**
+* **Model Context Protocol (MCP)**
+
+## Backend
+
+* **FastAPI**
+* **Uvicorn**
+* **Jinja2**
+
+## Tool & Data Integrations
+
+* **MCP**
+* **AviationStack**
+* **Tavily**
+
+## Database
+
+* **PostgreSQL**
+
+## Frontend
+
+* **HTML**
+* **CSS**
+* **JavaScript**
+
+## Infrastructure
+
+* **Docker**
+* **Render**
+
+---
+
+# 📂 Project Structure
 
 ```text
 Musafir-AI/
@@ -253,68 +398,85 @@ Musafir-AI/
 │   └── FastAPI application entry point
 │
 ├── backend.py
-│   └── LangGraph multi-agent workflow
+│   └── Multi-agent workflow
+│
+├── mcp_client.py
+│   └── MCP client integration
+│
+├── mcp_server.py
+│   └── MCP server / tool layer
 │
 ├── requirements.txt
 │   └── Python dependencies
 │
+├── Dockerfile
+│   └── Container configuration
+│
 ├── static/
-│   └── Frontend static assets
+│   └── CSS, JavaScript and static assets
 │
 ├── templates/
 │   └── HTML templates
 │
 ├── tools/
-│   └── External API and search integrations
+│   └── External API and tool integrations
 │
 ├── .env
-│   └── Environment variables
+│   └── Local environment variables
+│
+├── .gitignore
 │
 └── README.md
-    └── Project documentation
 ```
 
 ---
 
-## ⚙️ Prerequisites
+# ⚙️ Local Development
 
-Before running Musafir AI locally, make sure you have:
+## Prerequisites
 
-* Python **3.10+**
-* PostgreSQL
+Make sure you have:
+
+* Python 3.10+
 * Git
-* A Groq API key
-* A Tavily API key
-* An AviationStack API key
+* PostgreSQL
+* Docker
+* Required API credentials
+* MCP dependencies required by the configured tools
 
 ---
 
-## 🚀 Installation
-
-### 1. Clone the repository
+## 1. Clone the Repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/Musafir-AI.git
-cd Musafir-AI
+git clone https://github.com/atul-vish/Musafir-AI---A-Multi-Agent-Travel-Planner-with-LangGraph.git
+
+cd Musafir-AI---A-Multi-Agent-Travel-Planner-with-LangGraph
 ```
 
-### 2. Create a virtual environment
+---
 
-#### Windows
+## 2. Create a Virtual Environment
 
-```bash
+### Windows
+
+```powershell
 python -m venv .venv
+
 .venv\Scripts\activate
 ```
 
-#### macOS / Linux
+### macOS / Linux
 
 ```bash
 python3 -m venv .venv
+
 source .venv/bin/activate
 ```
 
-### 3. Install dependencies
+---
+
+## 3. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
@@ -322,25 +484,27 @@ pip install -r requirements.txt
 
 ---
 
-## 🔐 Environment Variables
+# 🔐 Environment Configuration
 
-Create a `.env` file in the project root.
+Create a `.env` file:
 
 ```env
-DATABASE_URL=postgresql://user:password@localhost:5432/travel_db
+DATABASE_URL=your_postgresql_connection_string
 
 GROQ_API_KEY=your_groq_api_key
 
-AVIATIONSTACK_API_KEY=your_aviationstack_api_key
-
 TAVILY_API_KEY=your_tavily_api_key
+
+AVIATIONSTACK_API_KEY=your_aviationstack_api_key
 
 DEFAULT_ORIGIN_IATA=DAC
 ```
 
-> ⚠️ Never commit your `.env` file or expose API keys publicly.
+Additional variables may be required depending on the MCP tools and integrations enabled in the current deployment.
 
-Add this to `.gitignore`:
+### Security
+
+Never commit secrets to GitHub.
 
 ```gitignore
 .env
@@ -351,51 +515,92 @@ __pycache__/
 
 ---
 
-## ▶️ Running Locally
+# ▶️ Running Locally
 
-Start the FastAPI application:
+Start the application:
 
 ```bash
 python app.py
 ```
 
-The application should be available at:
+The application runs at:
 
 ```text
-http://127.0.0.1:8001/
+http://127.0.0.1:8001
 ```
 
-Open the URL in your browser.
+---
+
+# 🐳 Docker
+
+Build:
+
+```bash
+docker build -t musafir-ai .
+```
+
+Run:
+
+```bash
+docker run --env-file .env -p 8001:8001 musafir-ai
+```
+
+Application:
+
+```text
+http://localhost:8001
+```
 
 ---
 
-## 🌐 Live Demo
+# 🌐 Deployment
 
-Try the deployed application:
+Musafir AI is deployed using **Docker + Render**.
 
-🚀 **[Launch Musafir AI](https://musafir-ai-a-multi-agent-travel-planner.onrender.com)**
+```text
+Developer
+    │
+    ▼
+Git Commit
+    │
+    ▼
+GitHub
+    │
+    ▼
+Render
+    │
+    ▼
+Docker Build
+    │
+    ├── Python Runtime
+    ├── Application Dependencies
+    ├── MCP Runtime
+    └── Environment Configuration
+    │
+    ▼
+FastAPI Application
+    │
+    ▼
+Live Musafir AI
+```
 
 ---
 
-## 🔌 API Endpoints
+# 🔌 API
 
-### Health Check
+## Health Check
 
 ```http
 GET /health
 ```
 
-Used to verify that the backend is running.
-
-### Travel Planning
+## Travel Planning
 
 ```http
 POST /api/travel
 ```
 
-Accepts a natural-language travel request.
-
-### Example
+Example:
 
 ```bash
 curl -X POST http://127.0.0.1:8001/api/travel \
@@ -405,243 +610,359 @@ curl -X POST http://127.0.0.1:8001/api/travel \
 
 ---
 
-## 🧪 Example Input
+# 🧪 Example Request
 
 ```text
-Plan a 4-day trip to Dubai.
+Plan a 5-day trip to Singapore.
 
-Budget: ₹80,000
+Budget: ₹1,00,000
 
-I want:
-- Good hotels
+I need:
 - Flight suggestions
+- Affordable hotels
 - Popular attractions
+- Local transportation suggestions
 - A day-by-day itinerary
-```
-
-## 📋 Example Output
-
-The system generates a structured travel plan containing relevant information such as:
-
-```text
-✈️ Flight Suggestions
-
-🏨 Hotel Recommendations
-
-📅 Day 1
-- Activity 1
-- Activity 2
-- Activity 3
-
-📅 Day 2
-- Activity 1
-- Activity 2
-- Activity 3
-
-📅 Day 3
-- Activity 1
-- Activity 2
-
-📅 Day 4
-- Activity 1
-- Activity 2
-
-💰 Estimated Budget
-
-📝 Additional Travel Tips
+- Budget-aware recommendations
 ```
 
 ---
 
-## 🧠 Why Multi-Agent Architecture?
+# 🧩 AI Engineering Concepts Demonstrated
 
-A single LLM can generate a travel plan, but specialized agents provide a more modular architecture.
+Musafir AI demonstrates practical AI engineering beyond basic LLM API usage.
 
-Each agent focuses on a specific responsibility:
+### Agentic AI
 
-```text
-Flight Agent
-     │
-     ├── Flight-related research
-     │
-Hotel Agent
-     │
-     ├── Accommodation research
-     │
-Itinerary Agent
-     │
-     ├── Schedule generation
-     │
-Final Agent
-     │
-     └── Response synthesis
-```
+Multiple specialized agents collaborate to complete a complex task.
 
-This makes the system easier to extend with additional capabilities such as:
+### LLM Orchestration
 
-* Restaurant recommendations
-* Weather analysis
-* Budget optimization
-* Local transportation
-* Visa information
-* Activity recommendations
-* Travel alerts
+LangGraph manages agent execution and state transitions.
+
+### MCP
+
+MCP provides a standardized tool integration layer between AI agents and external capabilities.
+
+### Tool Calling
+
+Agents interact with APIs, search systems, and external tools.
+
+### State Management
+
+PostgreSQL provides persistent application state.
+
+### API Engineering
+
+FastAPI exposes the AI system through a backend service.
+
+### Containerization
+
+Docker packages the application and runtime environment.
+
+### Cloud Deployment
+
+The application is deployed as a cloud-hosted service.
+
+### Failure Handling
+
+External APIs and tools can fail independently, requiring graceful handling and fallbacks.
 
 ---
 
-## 📈 Future Improvements
+# 📈 Extensibility
 
-Potential improvements include:
+The MCP-oriented architecture makes it possible to introduce additional tools and agents.
 
-* [ ] Real-time hotel booking integration
-* [ ] Real-time flight booking
+Potential future capabilities:
+
+```text
+                    Musafir AI
+                        │
+        ┌───────────────┼────────────────┐
+        ▼               ▼                ▼
+   Flight Tools    Hotel Tools      Search Tools
+        │               │                │
+        └───────────────┼────────────────┘
+                        │
+                        ▼
+                  MCP Tool Layer
+                        │
+       ┌────────────────┼────────────────┐
+       ▼                ▼                ▼
+   Weather          Restaurant       Transport
+    Agent              Agent            Agent
+       │                │                │
+       └────────────────┼────────────────┘
+                        ▼
+                Travel Intelligence
+```
+
+Potential additions include:
+
+* Weather Agent
+* Restaurant Agent
+* Transportation Agent
+* Budget Optimization Agent
+* Visa Information Agent
+* Activity Recommendation Agent
+* Travel Alert Agent
+
+---
+
+# 🗺️ Roadmap
+
+### Core Platform
+
+* [x] Natural-language travel planning
+* [x] FastAPI backend
+* [x] LangGraph orchestration
+* [x] Multi-agent architecture
+* [x] LLM-powered itinerary generation
+
+### Travel Intelligence
+
+* [x] Flight research
+* [x] Hotel research
+* [x] Web search integration
+* [x] PostgreSQL persistence
+
+### MCP & Tooling
+
+* [x] MCP integration
+* [x] MCP client/server architecture
+* [ ] Expand MCP tool ecosystem
+* [ ] Tool-level observability
+* [ ] Improved tool fallback handling
+
+### Personalization
+
+* [ ] User profiles
+* [ ] Persistent travel preferences
+* [ ] Personalized recommendations
+* [ ] Budget optimization
+
+### Advanced Travel Intelligence
+
 * [ ] Weather-aware itinerary generation
-* [ ] Restaurant recommendation agent
-* [ ] Budget optimization agent
+* [ ] Real-time travel alerts
 * [ ] Map integration
-* [ ] User authentication
-* [ ] Personalized travel preferences
-* [ ] Multi-language support
+* [ ] Transportation optimization
+* [ ] Real-time booking integrations
+
+### AI Experience
+
 * [ ] Voice-based travel planning
-* [ ] Agent observability and tracing
-* [ ] Improved error handling and fallback agents
-* [ ] Containerized deployment with Docker
-* [ ] Automated CI/CD pipeline
+* [ ] Multilingual support
+* [ ] Conversational trip modification
+* [ ] Mobile application
+
+### Production AI Engineering
+
+* [ ] Agent observability
+* [ ] Distributed tracing
+* [ ] Evaluation pipelines
+* [ ] Automated testing
+* [ ] CI/CD
+* [ ] LLM evaluation framework
+* [ ] Cost and latency monitoring
 
 ---
 
-## 🔒 Security Considerations
+# 🔒 Security & Reliability
 
-* API keys are stored using environment variables.
-* Sensitive credentials should never be committed to GitHub.
-* Production deployments should use secure secret management.
-* Database credentials should not be hardcoded.
-* External API failures should be handled gracefully.
+Production AI applications require more than model integration.
+
+Musafir AI follows these engineering principles:
+
+* 🔐 Secrets are stored through environment variables.
+* 🗄️ Database credentials are not hardcoded.
+* 🌐 External API failures should be handled gracefully.
+* 🧩 Agent responsibilities are separated.
+* 🔌 Tool integrations are isolated through defined interfaces.
+* 🐳 Runtime dependencies are containerized.
+* 🚫 Sensitive credentials should never be committed to GitHub.
+* 📊 Production deployments should use monitoring and logging.
+* 🔄 External integrations should have fallback strategies.
 
 ---
 
-## 🤝 Contributing
+# 📊 Observability & Evaluation
 
-Contributions are welcome!
+Future production improvements should evaluate both software and AI quality.
 
-### Fork the repository
+### System Metrics
+
+* Request latency
+* API response time
+* Tool execution time
+* Error rate
+* Database latency
+* LLM latency
+
+### AI Metrics
+
+* Response relevance
+* Itinerary quality
+* Tool-selection accuracy
+* Hallucination rate
+* Task completion rate
+* User satisfaction
+
+### Cost Metrics
+
+* Token consumption
+* LLM cost per request
+* External API usage
+* Average cost per itinerary
+
+---
+
+# 🤝 Contributing
+
+### 1. Fork the repository
+
+Fork the project through GitHub.
+
+### 2. Create a feature branch
 
 ```bash
-git fork
+git checkout -b feature/new-travel-agent
 ```
 
-Or fork the repository directly through GitHub.
-
-### Create a feature branch
-
-```bash
-git checkout -b feature/new-feature
-```
-
-### Commit your changes
+### 3. Make your changes
 
 ```bash
 git add .
-git commit -m "feat: add new travel feature"
 ```
 
-### Push your branch
+### 4. Commit
 
 ```bash
-git push origin feature/new-feature
+git commit -m "feat: add new travel agent"
 ```
 
-Then open a Pull Request.
+### 5. Push
+
+```bash
+git push origin feature/new-travel-agent
+```
+
+### 6. Open a Pull Request
+
+Include:
+
+* What changed
+* Why it changed
+* How it was tested
+* New environment variables, if any
+* Any architectural considerations
 
 ---
 
-## 🗺️ Roadmap
+# 📝 Development Guidelines
+
+Recommended commit convention:
 
 ```text
-✅ Basic Travel Planner
-        │
-        ▼
-✅ Multi-Agent Architecture
-        │
-        ▼
-✅ LangGraph Orchestration
-        │
-        ▼
-✅ Flight Research
-        │
-        ▼
-✅ Hotel Research
-        │
-        ▼
-✅ AI Itinerary Generation
-        │
-        ▼
-✅ PostgreSQL State Persistence
-        │
-        ▼
-🚧 Advanced Personalization
-        │
-        ▼
-🚧 Real-Time Travel Intelligence
-        │
-        ▼
-🚧 Voice + Multilingual Support
+feat: add weather agent
+fix: handle flight API timeout
+refactor: simplify itinerary workflow
+docs: update MCP documentation
+test: add agent workflow tests
+chore: update dependencies
 ```
 
 ---
 
-## 📊 Project Goals
+# 🏆 Project Goals
 
-Musafir AI aims to demonstrate how modern AI engineering concepts can be combined into a production-style application:
+Musafir AI demonstrates how modern AI engineering components can be combined into an extensible application:
 
-* Multi-agent systems
+```text
+                    Musafir AI
+                        │
+       ┌────────────────┼────────────────┐
+       ▼                ▼                ▼
+      LLMs           Agents             Tools
+       │                │                │
+       ▼                ▼                ▼
+    Groq          LangGraph            MCP
+       │                │                │
+       └────────────────┼────────────────┘
+                        ▼
+                  FastAPI Backend
+                        │
+                        ▼
+                   PostgreSQL
+                        │
+                        ▼
+                     Docker
+                        │
+                        ▼
+                     Render
+```
+
+The goal is to demonstrate an AI system that combines:
+
+* Multi-Agent AI
 * LLM orchestration
+* MCP
 * Tool calling
-* API integrations
+* External API integration
 * State management
-* Database persistence
 * Backend engineering
-* AI-powered decision workflows
+* Database persistence
+* Containerization
 * Cloud deployment
 
 ---
 
-## 🙌 Acknowledgments
+# 🙏 Acknowledgements
 
-Built using modern AI and web technologies including:
+Built with:
 
-* LangGraph
-* LangChain
-* Groq
-* FastAPI
-* Tavily
-* AviationStack
-* PostgreSQL
-
----
-
-## 📄 License
-
-This project is open source. Add your preferred license file, such as **MIT License**, before publishing the repository.
+* [LangGraph](https://www.langchain.com/langgraph)
+* [LangChain](https://www.langchain.com/)
+* [Model Context Protocol](https://modelcontextprotocol.io/)
+* [Groq](https://groq.com/)
+* [FastAPI](https://fastapi.tiangolo.com/)
+* [Tavily](https://tavily.com/)
+* [AviationStack](https://aviationstack.com/)
+* [PostgreSQL](https://www.postgresql.org/)
+* [Docker](https://www.docker.com/)
+* [Render](https://render.com/)
 
 ---
 
-## ⭐ Support
+# 📄 License
+
+This project is currently intended as an open-source project.
+
+Add an appropriate `LICENSE` file before distributing the repository publicly.
+
+---
+
+# ⭐ Support the Project
 
 If you find Musafir AI useful or interesting:
 
-⭐ Star the repository
-🍴 Fork the project
-🐛 Report issues
-💡 Suggest new features
-🤝 Contribute to the project
+* ⭐ Star the repository
+* 🍴 Fork the project
+* 🐛 Report issues
+* 💡 Suggest features
+* 🤝 Contribute
 
 ---
 
-<p align="center">
+<div align="center">
 
-### ✈️ Plan smarter. Travel better. Explore more.
+# ✈️ Musafir AI
 
-**[🚀 Try Musafir AI Live](https://musafir-ai-a-multi-agent-travel-planner.onrender.com)**
+### From natural language to an intelligent travel plan.
 
-</p>
+**Multi-Agent AI • LangGraph • MCP • FastAPI • Groq • PostgreSQL • Docker**
+
+[🚀 **Try Musafir AI Live**](https://musafir-ai-a-multi-agent-travel-planner.onrender.com)
+
+</div>
