@@ -1,6 +1,4 @@
-# ✈️ Musafir AI
-
-### MCP-Enabled Multi-Agent AI Travel Planner
+<h1 align="center"> ✈️ Musafir AI - MCP Enabled Multi-Agent AI Travel Planner </h1>
 
 > **An AI-powered travel planning system built with Multi-Agent Architecture, LangGraph, MCP, LLMs, external tools, and real-time travel data integrations.**
 
@@ -14,6 +12,12 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-4169E1?style=flat-square\&logo=postgresql\&logoColor=white)](https://www.postgresql.org/)
 [![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?style=flat-square\&logo=docker\&logoColor=white)](https://www.docker.com/)
 [![Render](https://img.shields.io/badge/Render-Deployed-46E3B7?style=flat-square)](https://render.com/)
+
+---
+
+<p align="center">
+  <img src="./project video/Musafir.jpg" alt="Smart Victim Intelligence workflow" width="100%">
+</p>
 
 ---
 
