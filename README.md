@@ -15,15 +15,13 @@
 
 ---
 
-<p align="center">
-  <img src="./project video/Musafir.jpg" alt="Smart Victim Intelligence workflow" width="100%">
-</p>
+https://github.com/user-attachments/assets/13e62211-d4ba-4088-9319-bcb4aaf48283
 
 ---
 
 ## 🌐 Live Application
 
-### [🚀 Launch Musafir AI](https://musafir-ai-a-multi-agent-travel-planner.onrender.com)
+### 🚀 [Launch Musafir AI](https://musafir-ai-a-multi-agent-travel-planner.onrender.com)
 
 Musafir AI transforms natural-language travel requirements into structured travel plans by combining **LLM reasoning, multi-agent orchestration, MCP-based tool integration, external APIs, web search, and persistent application state**.
 
