@@ -1,6 +1,4 @@
-# ✈️ Musafir AI
-
-### MCP-Enabled Multi-Agent AI Travel Planner
+<h1 align="center"> ✈️ Musafir AI - MCP Enabled Multi-Agent AI Travel Planner </h1>
 
 > **An AI-powered travel planning system built with Multi-Agent Architecture, LangGraph, MCP, LLMs, external tools, and real-time travel data integrations.**
 
@@ -17,9 +15,13 @@
 
 ---
 
+https://github.com/user-attachments/assets/13e62211-d4ba-4088-9319-bcb4aaf48283
+
+---
+
 ## 🌐 Live Application
 
-### [🚀 Launch Musafir AI](https://musafir-ai-a-multi-agent-travel-planner.onrender.com)
+### 🚀 [Launch Musafir AI](https://musafir-ai-a-multi-agent-travel-planner.onrender.com)
 
 Musafir AI transforms natural-language travel requirements into structured travel plans by combining **LLM reasoning, multi-agent orchestration, MCP-based tool integration, external APIs, web search, and persistent application state**.
 
