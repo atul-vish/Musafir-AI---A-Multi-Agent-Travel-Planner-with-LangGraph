@@ -139,8 +139,54 @@ function downloadPDF() {
     downloadBtn.textContent = "Preparing PDF...";
     downloadBtn.disabled = true;
 
+    // Render a clean copy of the plan in an off-screen, fixed-width sandbox.
+    // Capturing the live element makes html2canvas include the page's scroll
+    // offset and the hero/card layout above it, which shows up as a large
+    // blank band at the top of the PDF.
+    const PDF_WIDTH_PX = 794; // A4 width at 96 dpi
+
+    const sandbox = document.createElement("div");
+    sandbox.style.cssText = [
+        "position: fixed",
+        "top: 0",
+        "left: 0",
+        `width: ${PDF_WIDTH_PX}px`,
+        "z-index: -1",
+        "background: #ffffff",
+        "pointer-events: none"
+    ].join(";");
+
+    const clone = pdfContent.cloneNode(true);
+    clone.removeAttribute("id");
+    clone.style.cssText = [
+        "margin: 0",
+        "padding: 0",
+        "border: none",
+        "box-shadow: none",
+        `width: ${PDF_WIDTH_PX}px`,
+        "background: #ffffff"
+    ].join(";");
+
+    // Show the title that is hidden on screen, and drop anything that is UI-only.
+    const pdfTitle = clone.querySelector(".pdf-title");
+    if (pdfTitle) {
+        pdfTitle.style.display = "block";
+        pdfTitle.style.marginTop = "0";
+    }
+    clone.querySelectorAll(".result-actions, #threadInfo").forEach(el => el.remove());
+
+    // Make sure nothing at the top of the document adds spacing.
+    const firstChild = clone.firstElementChild;
+    if (firstChild) {
+        firstChild.style.marginTop = "0";
+        firstChild.style.paddingTop = "0";
+    }
+
+    sandbox.appendChild(clone);
+    document.body.appendChild(sandbox);
+
     const options = {
-        margin: 0.5,
+        margin: [0.5, 0.5, 0.6, 0.5], // top, left, bottom, right (inches)
         filename: "ai-travel-plan.pdf",
         image: {
             type: "jpeg",
@@ -149,29 +195,39 @@ function downloadPDF() {
         html2canvas: {
             scale: 2,
             useCORS: true,
-            backgroundColor: "#ffffff"
+            backgroundColor: "#ffffff",
+            scrollX: 0,
+            scrollY: 0,
+            x: 0,
+            y: 0,
+            windowWidth: PDF_WIDTH_PX
         },
         jsPDF: {
             unit: "in",
             format: "a4",
             orientation: "portrait"
         },
+        // "avoid-all" pushed every table/list to the next page and left big
+        // empty gaps. Only keep rows and headings from splitting instead.
         pagebreak: {
-            mode: ["avoid-all", "css", "legacy"]
+            mode: ["css", "legacy"],
+            avoid: ["tr", "h1", "h2", "h3", "li"]
         }
+    };
+
+    const cleanup = () => {
+        sandbox.remove();
+        downloadBtn.textContent = oldText;
+        downloadBtn.disabled = false;
     };
 
     html2pdf()
         .set(options)
-        .from(pdfContent)
+        .from(clone)
         .save()
-        .then(() => {
-            downloadBtn.textContent = oldText;
-            downloadBtn.disabled = false;
-        })
+        .then(cleanup)
         .catch(() => {
-            downloadBtn.textContent = oldText;
-            downloadBtn.disabled = false;
+            cleanup();
             showError("Could not download PDF.");
         });
 }
